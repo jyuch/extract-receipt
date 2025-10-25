@@ -6,7 +6,7 @@ from typing import List
 import dspy
 import mlflow
 
-from program import ReceiptExtractor
+from program import ReceiptExtractor, extraction_metric
 
 LMSTUDIO_API_BASE = os.environ["LMSTUDIO_API_BASE"]
 
@@ -29,26 +29,13 @@ student_llm = dspy.LM(
 )
 
 
-def extraction_metric(gold, pred, trace=None):
-    """Checks if all three fields are extracted correctly."""
-
-    metric = 0
-
-    if gold.total_amount == pred.total_amount:
-        metric += 1
-    if gold.purchase_date == pred.purchase_date:
-        metric += 1
-
-    if trace is None:
-        return metric / 2.0
-    else:
-        return metric == 2
-
-
 def run_prompt_optimizer(train_examples: List[dspy.Example]):
     student_program = ReceiptExtractor()
     optimizer = dspy.MIPROv2(
-        metric=extraction_metric, prompt_model=teacher_llm, task_model=student_llm
+        metric=extraction_metric,
+        prompt_model=teacher_llm,
+        task_model=student_llm,
+        num_threads=1,
     )
     compiled_program = optimizer.compile(student_program, trainset=train_examples)
     compiled_program.save("./program.json", save_program=False)
