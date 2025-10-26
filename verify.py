@@ -4,9 +4,9 @@ from datetime import datetime
 from typing import List
 
 import dspy
+from dspy.evaluate.evaluate import Evaluate
 
 from program import ReceiptExtractor, extraction_metric
-from dspy.evaluate.evaluate import Evaluate
 
 LMSTUDIO_API_BASE = os.environ["LMSTUDIO_API_BASE"]
 
@@ -20,6 +20,10 @@ gemma_3_27b = dspy.LM(
     "openai/google/gemma-3-27b",
     api_base=LMSTUDIO_API_BASE,
     api_key="dummy",
+)
+
+llama_4_maverick = dspy.LM(
+    "databricks/databricks-llama-4-maverick",
 )
 
 
@@ -52,6 +56,10 @@ def main():
         evaluate(trained, metric=extraction_metric)
 
     with dspy.context(lm=gemma_3_27b):
+        evaluate(original, metric=extraction_metric)
+        evaluate(trained, metric=extraction_metric)
+
+    with dspy.context(lm=llama_4_maverick):
         evaluate(original, metric=extraction_metric)
         evaluate(trained, metric=extraction_metric)
 
